@@ -28,6 +28,10 @@ pub struct Cmd {
     #[clap(flatten)]
     read_write_options: ReadWriteOptions,
 
+    /// True to print raw binary.
+    #[clap(long = "raw")]
+    raw: bool,
+
     /// Number of words to read from the target
     words: usize,
 }
@@ -37,37 +41,66 @@ impl Cmd {
         let session = cli::attach_probe(&client, self.probe_options, false).await?;
         let core = session.core(self.shared.core);
 
+        use std::io::Write;
         match self.read_write_options.width {
             ReadWriteBitWidth::B8 => {
                 let values = core
                     .read_memory_8(self.read_write_options.address, self.words)
                     .await?;
-                for val in values {
-                    print!("{:02x} ", val);
+                if self.raw {
+                    for word in values {
+                        std::io::stdout().write_all(&word.to_le_bytes())?;
+                    }
+                } else {
+                    for val in values {
+                        print!("{:02x} ", val);
+                    }
+                    println!();
                 }
             }
             ReadWriteBitWidth::B16 => {
                 let values = core
                     .read_memory_16(self.read_write_options.address, self.words)
                     .await?;
-                for val in values {
-                    print!("{:08x} ", val);
+                if self.raw {
+                    for word in values {
+                        std::io::stdout().write_all(&word.to_le_bytes())?;
+                    }
+                } else {
+                    for val in values {
+                        print!("{:08x} ", val);
+                    }
+                    println!();
                 }
             }
             ReadWriteBitWidth::B32 => {
                 let values = core
                     .read_memory_32(self.read_write_options.address, self.words)
                     .await?;
-                for val in values {
-                    print!("{:08x} ", val);
+                if self.raw {
+                    for word in values {
+                        std::io::stdout().write_all(&word.to_le_bytes())?;
+                    }
+                } else {
+                    for val in values {
+                        print!("{:08x} ", val);
+                    }
+                    println!();
                 }
             }
             ReadWriteBitWidth::B64 => {
                 let values = core
                     .read_memory_64(self.read_write_options.address, self.words)
                     .await?;
-                for val in values {
-                    print!("{:016x} ", val);
+                if self.raw {
+                    for word in values {
+                        std::io::stdout().write_all(&word.to_le_bytes())?;
+                    }
+                } else {
+                    for val in values {
+                        print!("{:08x} ", val);
+                    }
+                    println!();
                 }
             }
         }
