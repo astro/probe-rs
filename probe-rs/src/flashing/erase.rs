@@ -59,7 +59,7 @@ pub fn erase_all(session: &mut Session, progress: FlashProgress) -> Result<(), F
             entry.regions.push(region);
         } else {
             algos.push(FlasherWithRegions {
-                flasher: Flasher::new(session.target(), core, algo)?,
+                flasher: Flasher::new(session.target(), core, None, algo)?,
                 regions: vec![region],
             });
         }
@@ -212,7 +212,7 @@ pub fn erase_sectors(
         let algo = algo.unwrap();
 
         let core_index = session.target().core_index_by_name(&core_name).unwrap();
-        let mut flasher = Flasher::new(session.target(), core_index, algo)?;
+        let mut flasher = Flasher::new(session.target(), core_index, None, algo)?;
 
         let sectors = flasher
             .flash_algorithm()

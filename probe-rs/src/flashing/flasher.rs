@@ -14,6 +14,7 @@ use std::marker::PhantomData;
 use std::{
     fmt::Debug,
     time::{Duration, Instant},
+    sync::Arc,
 };
 
 /// The timeout for init/uninit routines.
@@ -119,6 +120,7 @@ pub(super) struct Flasher {
     pub(super) flash_algorithm: FlashAlgorithm,
     pub(super) loaded: bool,
     pub(super) regions: Vec<LoadedRegion>,
+    pub(super) prepare_core: Option<Arc<dyn Fn(&mut Core, &FlashAlgorithm) -> Result<(), crate::Error>>>,
 }
 
 /// The byte used to fill the stack when checking for stack overflows.
@@ -128,6 +130,7 @@ impl Flasher {
     pub(super) fn new(
         target: &Target,
         core_index: usize,
+        prepare_core: Option<Arc<dyn Fn(&mut Core, &FlashAlgorithm) -> Result<(), crate::Error>>>,
         raw_flash_algorithm: &RawFlashAlgorithm,
     ) -> Result<Self, FlashError> {
         let flash_algorithm = FlashAlgorithm::assemble_from_raw_with_core(
@@ -138,6 +141,7 @@ impl Flasher {
 
         Ok(Self {
             core_index,
+            prepare_core,
             flash_algorithm,
             loaded: false,
             regions: Vec::new(),
@@ -168,10 +172,15 @@ impl Flasher {
         // Attach to memory and core.
         let mut core = session.core(self.core_index).map_err(FlashError::Core)?;
 
-        // TODO: we probably want a full system reset here to make sure peripherals don't interfere.
-        tracing::debug!("Reset and halt core {}", self.core_index);
-        core.reset_and_halt(Duration::from_millis(500))
-            .map_err(FlashError::ResetAndHalt)?;
+        if let Some(prep) = &self.prepare_core {
+            tracing::debug!("Preparing core {} with user closure", self.core_index);
+            prep(&mut core, &algo).map_err(FlashError::Core)?;
+        } else {
+            // TODO: we probably want a full system reset here to make sure peripherals don't interfere.
+            tracing::debug!("Reset and halt core {}", self.core_index);
+            core.reset_and_halt(Duration::from_millis(500))
+                .map_err(FlashError::ResetAndHalt)?;
+        }
 
         // TODO: Possible special preparation of the target such as enabling faster clocks for the flash e.g.
 

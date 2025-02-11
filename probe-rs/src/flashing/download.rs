@@ -9,6 +9,7 @@ use std::{
     fs::File,
     path::{Path, PathBuf},
     str::FromStr,
+    sync::Arc,
 };
 
 use super::*;
@@ -209,6 +210,9 @@ pub struct DownloadOptions<'p> {
     pub verify: bool,
     /// Disable double buffering when loading flash.
     pub disable_double_buffering: bool,
+    /// Preparation routine to run on the core before executing the flash algorithm.
+    /// If supplied, the core is not otherwise reset.
+    pub prepare_core: Option<Arc<dyn Fn(&mut crate::Core, &FlashAlgorithm) -> Result<(), crate::Error>>>,
 }
 
 impl DownloadOptions<'_> {
