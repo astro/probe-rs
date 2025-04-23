@@ -25,6 +25,9 @@ remote = [
     "dep:tempfile",
 ]
 
+[lib]
+path = "src/bin/probe-rs/main.rs"
+
 [dependencies]
 anyhow = { workspace = true }
 base64 = "0.22"

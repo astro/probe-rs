@@ -4,7 +4,7 @@ mod arch;
 mod stub;
 mod target;
 
-pub(crate) use stub::{GdbInstanceConfiguration, run};
+pub use stub::{GdbInstanceConfiguration, run};
 
 use std::path::PathBuf;
 use std::process::Command;

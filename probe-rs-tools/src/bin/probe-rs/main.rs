@@ -1,4 +1,4 @@
-mod cmd;
+pub mod cmd;
 mod report;
 mod rpc;
 mod util;
